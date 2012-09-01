@@ -3,10 +3,15 @@ WIDTH = 800
 HEIGHT = 600
 
 function love.load()
+	TLbind,control = love.filesystem.load("lib/TLbind.lua")()
+
 	require( 'lib/middleclass' )
-
-	require( 'entities/obstacle' )
-
+	require( 'EntityManager' )
+	require( 'entities/Player' )
+	require( 'entities/Obstacle' )
+	require( 'entities/FOV' )
+	require( 'Vec2' )
+	
 	love.graphics.setBackgroundColor(46,48,148)
 	
 	local grid_tile_img = love.graphics.newImage( "textures/grid_tile_w.png" )
@@ -24,11 +29,17 @@ function love.load()
 		end
 	end
 	
-	caja1 = Obstacle:new( 400, 300, 50, 50 )
-	caja2 = Obstacle:new( 100, 300, 50, 50 )
-	caja3 = Obstacle:new( 200, 200, 50, 50 )
-	caja4 = Obstacle:new( 400, 500, 50, 50 )
-	caja5 = Obstacle:new( 100, 300, 50, 50 )
+	EM = EntityManager:new()
+	
+	EM:add( Obstacle, 100, 100, 25, 25 )
+	--EM:add( Obstacle, 400, 200, 50, 25 )
+	--EM:add( Obstacle, 200, 200, 25, 50 )
+	--EM:add( Obstacle, 400, 500, 50, 50 )
+	--EM:add( Obstacle, 100, 350, 25, 25 )
+	
+	--EM:add( FOV, pseudo_player, 100, 135, { 0, 255, 255 } )
+	EM:add( Player, 400, 300 )
+	
 end
 	
 function love.draw()
@@ -42,48 +53,20 @@ function love.draw()
 	love.graphics.rectangle( "fill", 5, 		8, 			3, 			HEIGHT - 15 )	-- left
 	love.graphics.rectangle( "fill", WIDTH - 8, 8, 			3, 			HEIGHT - 15 ) 	-- right
 	
-	
-	caja1:draw()
-	caja2:draw()
-	caja3:draw()
-	caja4:draw()
-	caja5:draw()
-	love.graphics.setColor( 255, 255, 255 )
+	EM:draw()
+	--[[
 	mouse_pos = { x = love.mouse.getX(), y = love.mouse.getY() }
 	point_list = caja1:pointsFacing( mouse_pos )
 	for i = 1, #point_list - 1 do
 		love.graphics.line( point_list[i].x, point_list[i].y, point_list[i+1].x, point_list[i+1].y )
 	end
-	mouse_pos = { x = love.mouse.getX(), y = love.mouse.getY() }
-	point_list = caja2:pointsFacing( mouse_pos )
-	for i = 1, #point_list - 1 do
-		love.graphics.line( point_list[i].x, point_list[i].y, point_list[i+1].x, point_list[i+1].y )
-	end
-	mouse_pos = { x = love.mouse.getX(), y = love.mouse.getY() }
-	point_list = caja2:pointsFacing( mouse_pos )
-	for i = 1, #point_list - 1 do
-		love.graphics.line( point_list[i].x, point_list[i].y, point_list[i+1].x, point_list[i+1].y )
-	end
-	mouse_pos = { x = love.mouse.getX(), y = love.mouse.getY() }
-	point_list = caja3:pointsFacing( mouse_pos )
-	for i = 1, #point_list - 1 do
-		love.graphics.line( point_list[i].x, point_list[i].y, point_list[i+1].x, point_list[i+1].y )
-	end
-	mouse_pos = { x = love.mouse.getX(), y = love.mouse.getY() }
-	point_list = caja4:pointsFacing( mouse_pos )
-	for i = 1, #point_list - 1 do
-		love.graphics.line( point_list[i].x, point_list[i].y, point_list[i+1].x, point_list[i+1].y )
-	end
-	mouse_pos = { x = love.mouse.getX(), y = love.mouse.getY() }
-	point_list = caja5:pointsFacing( mouse_pos )
-	for i = 1, #point_list - 1 do
-		love.graphics.line( point_list[i].x, point_list[i].y, point_list[i+1].x, point_list[i+1].y )
-	end
-	
+	--]]
 	
 end
 
 function love.update(dt)
+	TLbind:update()
+	EM:update( dt )
 end
 
 function love.keypressed(key, unicode)
