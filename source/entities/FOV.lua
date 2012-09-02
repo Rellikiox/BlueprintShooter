@@ -2,7 +2,7 @@
 
 FOV = class( "FOV", Entity )
 
-FOV.static.segment_length = 15
+FOV.static.segment_length = 5
 
 FOV.static.getAng = function ( a, b, p )
 	local ab = b - a
@@ -12,7 +12,7 @@ FOV.static.getAng = function ( a, b, p )
 	return val
 end
 
-function FOV:insertPoints ( p11, p12, p21, p22, p3 ) 	
+function FOV:insertPoints( p11, p12, p21, p22, intermediate ) 	
 	local found = false
 	local i = 1
 	while i <= #self.segment_points do
@@ -20,30 +20,39 @@ function FOV:insertPoints ( p11, p12, p21, p22, p3 )
 			if self.segment_points[ i ].val > p11.val then
 				table.insert( self.segment_points, i , p12)
 				table.insert( self.segment_points, i + 1, p11 )
-				print( "Coloco el segundo en la pos " .. i )
+				--print( "Coloco el segundo en la pos " .. i )
 				break
 			else
 				table.remove( self.segment_points, i )
-				print( "Borro" )
+				--print( "Borro" )
 				--i = i + 1
 			end
 		else
 			if self.segment_points[ i ].val > p21.val then -- colocamos el primero
 				table.insert( self.segment_points, i, p21 )
-				table.insert( self.segment_points, i + 1, p22 )
+				i = i + 1
+				table.insert( self.segment_points, i, p22 )
+				i = i + 1
 				found = true
-				print( "Coloco el primero en la pos " .. i )
-				if p3 then
-					table.insert( self.segment_points, i + 2, p3 )
-					i = i + 3
-				else
-					i = i + 2
+				--print( "Coloco el primero en la pos " .. i )
+				if intermediate then
+					for k, v in ipairs( intermediate ) do
+						table.insert( self.segment_points, i, v )
+						i = i + 1
+					end					
 				end
 			else
 				i = i + 1
-				print( "Avanzo" )
 			end
 		end				
+	end
+end
+
+function FOV:cleanSegments() 
+	for i = 1, #self.oclusing_segments - 1 do
+		for j = i, #self.oclusing_segments do
+			
+		end
 	end
 end
 
@@ -55,6 +64,7 @@ function FOV:initialize( owner, size, aperture, color )
 	self.size = size
 	self.color = color
 	self.segment_points = {}
+	self.close_segment_points = {}
 	self.oclusing_segments = { }
 	self.shadow_points = { }
 	self:calculateSegments()
@@ -62,16 +72,22 @@ end
 
 function FOV:calculateSegments( )
 	self.segment_points = { }
+	self.close_segment_points = { }
 	self.tl = Vec2( self.owner.pos.x, self.owner.pos.y )
 	self.br = Vec2( self.owner.pos.x, self.owner.pos.y )
 	local new_ang = self.rot - self.aperture / 2
 	
 	for i = 0, math.ceil( self.aperture / FOV.segment_length ) do
-		local x1 = self.pos.x + self.size * math.cos( math.rad(new_ang) )
-		local y1 = self.pos.y + self.size * math.sin( math.rad(new_ang) )
+		local aux_cos = math.cos( math.rad(new_ang) )
+		local aux_sin = math.sin( math.rad(new_ang) )
+		local x1 = self.pos.x + self.size * aux_cos
+		local y1 = self.pos.y + self.size * aux_sin
+		local x0 = self.pos.x + Player.radius * aux_cos
+		local y0 = self.pos.y + Player.radius * aux_sin		
 		new_ang = new_ang + FOV.segment_length
 		
 		self.segment_points[ i + 1 ] = Vec2( x1, y1 )
+		self.close_segment_points[ i + 1 ] = Vec2( x0, y0 )
 		
 		-- Keep track of left top bottom right
 		self.tl.x = math.min( self.tl.x, x1 )
@@ -82,10 +98,6 @@ function FOV:calculateSegments( )
 	
 	for k, v in pairs( self.segment_points ) do
 		v.val = FOV.getAng( self.pos, self.segment_points[1], v)
-	end
-	
-	for k1, v1 in ipairs( self.segment_points ) do
-		print( k1 .. " -> " .. v1.val )
 	end
 end
 
@@ -109,10 +121,18 @@ function FOV:queryObjects( )
 		end
 	end
 	self.shadow_points = { }
+	self.oclusing_segments = { }
 	for k, v in pairs( self.visible_shapes ) do
 		v:pointsFacing( self.pos )
 		local point_list = v:pointsFacing( self.pos )
-		if #point_list == 2 then
+		
+		for i = 1, #point_list - 1 do
+			point_list[i].val = FOV.getAng( self.pos, self.segment_points[1], point_list[i])
+			point_list[i].val2 = (point_list[i] - self.pos):Length()
+			table.insert( self.oclusing_segments, { point_list[i], point_list[i+1] } )
+		end
+		--[[
+		if #point_list == 2 then	
 			
 			local dir1 = point_list[1] - self.pos
 			dir1:Normalize()
@@ -127,14 +147,14 @@ function FOV:queryObjects( )
 			point_list[2].val = p2.val - 0.00001
 			
 			self:insertPoints( p1, point_list[1], p2, point_list[2] )
-
 		else -- #point_list == 3
-		
 			local dir1 = point_list[1] - self.pos
 			dir1:Normalize()
 			local p1 = Vec2( self.pos.x + dir1.x * self.size, self.pos.y + dir1.y * self.size )
 			p1.val = FOV.getAng( self.pos, self.segment_points[1], p1)
 			point_list[1].val = p1.val + 0.00001
+			
+			point_list[ 2 ].val = FOV.getAng( self.pos, self.segment_points[1], point_list[ 2 ])
 			
 			local dir2 = point_list[3] - self.pos
 			dir2:Normalize()
@@ -142,16 +162,13 @@ function FOV:queryObjects( )
 			p2.val = FOV.getAng( self.pos, self.segment_points[1], p2)
 			point_list[3].val = p2.val - 0.00001
 			
-			self:insertPoints( p1, point_list[1], p2, point_list[3], point_list[ 2 ] )
-		
-		end
-		
-		for k2, v2 in pairs( point_list ) do
-			local dir = v2 - self.pos
-			dir:Normalize()
-			table.insert( self.shadow_points, Vec2( self.pos.x + dir.x * self.size, self.pos.y + dir.y * self.size ) )
-		end
+			self:insertPoints( p1, point_list[1], p2, point_list[3], { point_list[ 2 ] } )
+		end--]]
 	end
+	--local timer = love.timer.getMicroTime()
+	--self:cleanSegments()
+	--print( love.timer.getMicroTime() - timer )
+	
 end
 
 function FOV:draw( )
@@ -159,21 +176,23 @@ function FOV:draw( )
 	self.color[ 4 ] = 100
 	love.graphics.setColor( unpack( self.color ) )
 	for i = 1, #self.segment_points - 1 do
+		local p0 = self.close_segment_points[ i ]
 		local p1 = self.segment_points[ i ]
 		local p2 = self.segment_points[ i + 1 ]
-		love.graphics.triangle( "fill", self.pos.x, self.pos.y, p1.x, p1.y, p2.x, p2.y )
+		local p3 = self.close_segment_points[ i + 1 ]
+		love.graphics.polygon( "fill", p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y )
 	end
 	
 	-- Border of the FOV
 	self.color[ 4 ] = 255
 	love.graphics.setColor( unpack( self.color ) )
-	love.graphics.line( self.pos.x, self.pos.y, self.segment_points[1].x, self.segment_points[1].y )
+	love.graphics.line( self.close_segment_points[1].x, self.close_segment_points[1].y, self.segment_points[1].x, self.segment_points[1].y )
 	for i = 1, #self.segment_points - 1 do
 		local p1 = self.segment_points[ i ]
 		local p2 = self.segment_points[ i + 1 ]
 		love.graphics.line( p1.x, p1.y, p2.x, p2.y )
 	end
-	love.graphics.line( self.pos.x, self.pos.y, self.segment_points[#self.segment_points].x, self.segment_points[#self.segment_points].y )
+	love.graphics.line( self.close_segment_points[#self.close_segment_points].x, self.close_segment_points[#self.close_segment_points].y, self.segment_points[#self.segment_points].x, self.segment_points[#self.segment_points].y )
 	
 	for k, v in pairs( self.shadow_points ) do
 		--love.graphics.line( self.pos.x, self.pos.y, v.x, v.y )
@@ -190,7 +209,9 @@ function FOV:update( dt )
 	self.rot = self.owner.rot
 	if change then
 		self:calculateSegments()
+		local timer = love.timer.getMicroTime()
 		self:queryObjects()
+		print( love.timer.getMicroTime() - timer )
 	end
 	
 	if control.tap.attack then
