@@ -44,38 +44,38 @@ function QuadTree:insert( element, bbox )
 end
 
 function QuadTree:query( range ) -- I hate recursion
-	local elements = { }
+	local in_range_elements = { }
 	
 	if not self.divided then
 		for k, v in pairs( self.elements_regions ) do
 			if v:intersects( range ) then
-				table.insert( elements, self.elements[ k ] )
+				table.insert( in_range_elements, self.elements[ k ] )
 			end
 		end
 	else	
 		if self.nw.boundary:intersects( range ) then
 			for k, v in pairs( self.nw:query( range ) ) do
-				table.insert( elements, v )
+				table.insert( in_range_elements, v )
 			end
 		end
 		if self.ne.boundary:intersects( range ) then
 			for k, v in pairs( self.ne:query( range ) ) do
-				table.insert( elements, v )
+				table.insert( in_range_elements, v )
 			end
 		end
 		if self.se.boundary:intersects( range ) then
 			for k, v in pairs( self.se:query( range ) ) do
-				table.insert( elements, v )
+				table.insert( in_range_elements, v )
 			end
 		end
 		if self.sw.boundary:intersects( range ) then
 			for k, v in pairs( self.sw:query( range ) ) do
-				table.insert( elements, v )
+				table.insert( in_range_elements, v )
 			end
 		end
 	end
-	
-	return elements
+	--print( "inside method " .. #in_range_elements )
+	return in_range_elements
 end
 
 function QuadTree:subdivide( )
@@ -101,13 +101,15 @@ function QuadTree:subdivide( )
 end
 
 function QuadTree:draw( )
-	love.graphics.line( self.boundary.center.x - self.boundary.half.x, self.boundary.center.y, self.boundary.center.x + self.boundary.half.x, self.boundary.center.y )
-	love.graphics.line( self.boundary.center.x, self.boundary.center.y - self.boundary.half.y, self.boundary.center.x, self.boundary.center.y + self.boundary.half.y )
 	if self.divided then
-		self.nw:draw()
-		self.ne:draw()
-		self.se:draw()
-		self.sw:draw()
+		love.graphics.line( self.boundary.center.x - self.boundary.half.x, self.boundary.center.y, self.boundary.center.x + self.boundary.half.x, self.boundary.center.y )
+		love.graphics.line( self.boundary.center.x, self.boundary.center.y - self.boundary.half.y, self.boundary.center.x, self.boundary.center.y + self.boundary.half.y )
+		if self.divided then
+			self.nw:draw()
+			self.ne:draw()
+			self.se:draw()
+			self.sw:draw()
+		end
 	end
 end
 

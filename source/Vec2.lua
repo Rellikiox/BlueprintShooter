@@ -22,3 +22,13 @@ end
 function Vec2:__concat( v )
 	return self:__tostring() .. v:__tostring()
 end
+
+function Vec2:Length( )
+	return math.sqrt( self.x * self.x + self.y * self.y )
+end
+
+function Vec2:Normalize( )
+	local size = self:Length()
+	self.x = self.x / size
+	self.y = self.y / size
+end

@@ -3,6 +3,7 @@ WIDTH = 800
 HEIGHT = 600
 
 function love.load()
+	
 	TLbind,control = love.filesystem.load("lib/TLbind.lua")()
 
 	require( 'lib/middleclass' )
@@ -30,12 +31,15 @@ function love.load()
 	end
 	
 	EM = EntityManager:new()
-	
+	--[[
 	EM:add( Obstacle, 100, 100, 25, 25 )
-	--EM:add( Obstacle, 400, 200, 50, 25 )
-	--EM:add( Obstacle, 200, 200, 25, 50 )
-	--EM:add( Obstacle, 400, 500, 50, 50 )
-	--EM:add( Obstacle, 100, 350, 25, 25 )
+	EM:add( Obstacle, 400, 200, 25, 25 )
+	EM:add( Obstacle, 200, 200, 25, 25 )
+	EM:add( Obstacle, 400, 500, 25, 25 )
+	EM:add( Obstacle, 100, 350, 25, 25 )
+	EM:add( Obstacle, 200, 350, 25, 25 )--]]
+	EM:add( Obstacle, 300, 350, 25, 25 )
+	EM:add( Obstacle, 400, 350, 25, 25 )
 	
 	--EM:add( FOV, pseudo_player, 100, 135, { 0, 255, 255 } )
 	EM:add( Player, 400, 300 )
