@@ -7,17 +7,20 @@ EntityManager = class( "EntityManager" )
 function EntityManager:initialize( )
 	self.entities = {}
 	self.QT = QuadTree( AABB( Vec2( 400, 300 ), Vec2( 400, 300 ) ), 1 )
+	self.entity_count = 0
 end
 
 function EntityManager:add( klass, ... )
 	
 	ent = klass( unpack( arg ) )
+	ent.id = self.entity_count
+	self.entity_count = self.entity_count + 1
 	if not self.entities[ klass ] then
 		self.entities[ klass ] = { ent }
 	else
 		table.insert( self.entities[ klass ], ent )
 	end
-	if klass == Obstacle then
+	if klass == Wall then
 		self.QT:insert( ent, ent:getAABB() )
 	end
 end
@@ -41,6 +44,13 @@ function EntityManager:update( dt )
 end
 
 function EntityManager:draw( )
+	for k1, entList in pairs( self.entities ) do
+		for k2, ent in pairs( entList ) do
+			if ent.drawBG then
+				ent:drawBG( )
+			end
+		end
+	end
 	for k1, entList in pairs( self.entities ) do
 		for k2, ent in pairs( entList ) do
 			if ent.draw then

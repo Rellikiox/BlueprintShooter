@@ -4,7 +4,7 @@ Player = class( "Player", Entity )
 
 Player.static.radius = 10
 Player.static.speed = 100
-Player.static.color = { 255, 255, 255 }
+Player.static.color = { 255, 0, 0 }
 
 function Player:initialize( x, y )
 	require( 'entities/FOV' )
@@ -12,7 +12,7 @@ function Player:initialize( x, y )
 	self.vel = Vec2:new( 0, 0 )
 	self.rot = 0
 	
-	EM:add( FOV, self, 200, 135, { 255, 255, 255 } )
+	EM:add( FOV, self, 200, 90, Player.color )
 end
 
 function Player:checkInput( )
@@ -33,6 +33,9 @@ function Player:checkInput( )
 	end
 
 	self.rot = math.deg( -math.atan2( self.pos.y - love.mouse.getY(), love.mouse.getX() - self.pos.x ) )
+	if self.rot < 0 then
+		self.rot = self.rot + 360
+	end
 end
 
 function Player:update( dt )

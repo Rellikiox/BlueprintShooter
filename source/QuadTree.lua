@@ -2,7 +2,7 @@
 
 QuadTree = class( "QuadTree" )
 
-QuadTree.static.MAX_DEPTH = 4
+QuadTree.static.MAX_DEPTH = 6
 function QuadTree:initialize( boundary, depth )
 	self.boundary = boundary
 	self.divided = false
@@ -12,7 +12,6 @@ function QuadTree:initialize( boundary, depth )
 	self.se = nil
 	self.sw = nil
 	self.elements = { }
-	self.elements_regions = { }
 end
 
 function QuadTree:insert( element, bbox )
@@ -21,8 +20,7 @@ function QuadTree:insert( element, bbox )
 	end
 	
 	if self.depth == QuadTree.MAX_DEPTH then
-		table.insert( self.elements, element )
-		table.insert( self.elements_regions, bbox )
+		table.insert( self.elements, { ["element"] = element, ["bbox"] = bbox } )
 		return true
 	end
 	
@@ -32,11 +30,14 @@ function QuadTree:insert( element, bbox )
 	
 	if self.nw.boundary:intersects( bbox ) then
 		self.nw:insert( element, bbox )
-	elseif self.ne.boundary:intersects( bbox ) then
+	end
+	if self.ne.boundary:intersects( bbox ) then
 		self.ne:insert( element, bbox )
-	elseif self.se.boundary:intersects( bbox ) then
+	end
+	if self.se.boundary:intersects( bbox ) then
 		self.se:insert( element, bbox )
-	elseif self.sw.boundary:intersects( bbox ) then
+	end
+	if self.sw.boundary:intersects( bbox ) then
 		self.sw:insert( element, bbox )
 	end
 	
@@ -47,34 +48,33 @@ function QuadTree:query( range ) -- I hate recursion
 	local in_range_elements = { }
 	
 	if not self.divided then
-		for k, v in pairs( self.elements_regions ) do
-			if v:intersects( range ) then
-				table.insert( in_range_elements, self.elements[ k ] )
+		for k, v in pairs( self.elements ) do
+			if v.bbox:intersects( range ) then
+				in_range_elements[ v.element.id ] = v.element
 			end
 		end
 	else	
 		if self.nw.boundary:intersects( range ) then
 			for k, v in pairs( self.nw:query( range ) ) do
-				table.insert( in_range_elements, v )
+				in_range_elements[ v.id ] = v
 			end
 		end
 		if self.ne.boundary:intersects( range ) then
 			for k, v in pairs( self.ne:query( range ) ) do
-				table.insert( in_range_elements, v )
+				in_range_elements[ v.id ] = v
 			end
 		end
 		if self.se.boundary:intersects( range ) then
 			for k, v in pairs( self.se:query( range ) ) do
-				table.insert( in_range_elements, v )
+				in_range_elements[ v.id ] = v
 			end
 		end
 		if self.sw.boundary:intersects( range ) then
 			for k, v in pairs( self.sw:query( range ) ) do
-				table.insert( in_range_elements, v )
+				in_range_elements[ v.id ] = v
 			end
 		end
 	end
-	--print( "inside method " .. #in_range_elements )
 	return in_range_elements
 end
 
@@ -101,7 +101,7 @@ function QuadTree:subdivide( )
 end
 
 function QuadTree:draw( )
-	if self.divided then
+	if self.divided and debug_on then
 		love.graphics.line( self.boundary.center.x - self.boundary.half.x, self.boundary.center.y, self.boundary.center.x + self.boundary.half.x, self.boundary.center.y )
 		love.graphics.line( self.boundary.center.x, self.boundary.center.y - self.boundary.half.y, self.boundary.center.x, self.boundary.center.y + self.boundary.half.y )
 		if self.divided then

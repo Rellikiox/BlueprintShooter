@@ -1,21 +1,32 @@
 
 WIDTH = 800
 HEIGHT = 600
+debug_on = false
 
 function love.load()
 	
 	TLbind,control = love.filesystem.load("lib/TLbind.lua")()
-
+	require( 'lib/TEsound' )
 	require( 'lib/middleclass' )
 	require( 'EntityManager' )
+	require( 'ResourceManager' )
 	require( 'entities/Player' )
-	require( 'entities/Obstacle' )
+	require( 'entities/Wall' )
 	require( 'entities/FOV' )
 	require( 'Vec2' )
+	require( 'Clock' )
+	local HC = require("lib/HardonCollider")
+	Collider = HC(10, collision)
 	
 	love.graphics.setBackgroundColor(46,48,148)
 	
-	local grid_tile_img = love.graphics.newImage( "textures/grid_tile_w.png" )
+	EM = EntityManager()
+	RM = ResourceManager()
+	
+	RM:addImage( "textures/wall_pattern.png", "Wall_background_tile" )
+	RM:addImage( "textures/grid_tile_w.png", "background_tile" )
+	
+	local grid_tile_img = RM:getImage( "background_tile" )
 	local tile_width = grid_tile_img:getWidth()
 	local tile_height = grid_tile_img:getHeight()
 	local grid_tile = love.graphics.newQuad( 0, 0, tile_width, tile_height, tile_width, tile_height )
@@ -30,58 +41,41 @@ function love.load()
 		end
 	end
 	
-	EM = EntityManager:new()
-	--[[
-	EM:add( Obstacle, 100, 100, 25, 25 )
-	EM:add( Obstacle, 400, 200, 25, 25 )
-	EM:add( Obstacle, 200, 200, 25, 25 )
-	EM:add( Obstacle, 400, 500, 25, 25 )
-	EM:add( Obstacle, 100, 350, 25, 25 )
-	EM:add( Obstacle, 200, 350, 25, 25 )--]]
-	EM:add( Obstacle, 300, 350, 5, 5 )
-	EM:add( Obstacle, 300, 340, 5, 5 )
-	EM:add( Obstacle, 300, 330, 5, 5 )
-	EM:add( Obstacle, 300, 320, 5, 5 )
-	EM:add( Obstacle, 300, 360, 5, 5 )
-	EM:add( Obstacle, 300, 370, 5, 5 )
-	EM:add( Obstacle, 300, 380, 5, 5 )
-	EM:add( Obstacle, 400, 300, 25, 100 )
+	EM:add( Wall, 300, 300, 50, 50 )
+	EM:add( Wall, 325, 325, 50, 50 )
+	EM:add( Wall, 0, 310, 310, 25 )
+	EM:add( Wall, 340, 250, 100, 100 )
 	
-	--EM:add( FOV, pseudo_player, 100, 135, { 0, 255, 255 } )
 	EM:add( Player, 400, 300 )
 	
 end
 	
 function love.draw()
+
 	-- background pattern
 	love.graphics.setColor( 233, 247, 255, 25 )
 	love.graphics.draw( background_batch )
 	-- white rectangle
 	love.graphics.setColor( 233, 247, 255, 64 )
-	love.graphics.rectangle( "fill", 5, 		5, 			WIDTH - 10, 3 )				-- top
-	love.graphics.rectangle( "fill", 5, 		HEIGHT - 7, WIDTH - 10, 3 ) 			-- bottom
-	love.graphics.rectangle( "fill", 5, 		8, 			3, 			HEIGHT - 15 )	-- left
-	love.graphics.rectangle( "fill", WIDTH - 8, 8, 			3, 			HEIGHT - 15 ) 	-- right
+	love.graphics.setLineWidth( 3 )
+	love.graphics.rectangle( "line", 5, 5, WIDTH - 10, HEIGHT - 10 )
+	love.graphics.setLineWidth( 1 )
 	
-	EM:draw()
-	--[[
-	mouse_pos = { x = love.mouse.getX(), y = love.mouse.getY() }
-	point_list = caja1:pointsFacing( mouse_pos )
-	for i = 1, #point_list - 1 do
-		love.graphics.line( point_list[i].x, point_list[i].y, point_list[i+1].x, point_list[i+1].y )
-	end
-	--]]
-	
+	EM:draw()	
 end
 
 function love.update(dt)
 	TLbind:update()
 	EM:update( dt )
+	Collider:update(dt)
+	TEsound.cleanup()
 end
 
 function love.keypressed(key, unicode)
 	if key == "escape" then
 		love.event.quit()
+	elseif key == "tab" then
+		debug_on = not debug_on
 	end
 end
 

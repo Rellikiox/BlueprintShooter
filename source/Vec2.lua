@@ -27,8 +27,26 @@ function Vec2:Length( )
 	return math.sqrt( self.x * self.x + self.y * self.y )
 end
 
+function Vec2:LengthSqrd( )
+	return self.x * self.x + self.y * self.y
+end
+
 function Vec2:Normalize( )
 	local size = self:Length()
 	self.x = self.x / size
 	self.y = self.y / size
+end
+
+function Vec2:AngleRad( vec )
+	if vec then
+		return math.atan2( vec.y, vec.x ) - math.atan2( self.y, self.x )
+	end
+	return math.atan2( self.y, self.x )
+end
+
+function Vec2:AngleDeg( vec )
+	if vec then
+		return math.deg( math.atan2( vec.y, vec.x ) - math.atan2( self.y, self.x ) )
+	end
+	return math.deg( math.atan2( self.y, self.x ) )
 end
