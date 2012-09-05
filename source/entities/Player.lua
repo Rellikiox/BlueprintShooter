@@ -12,7 +12,7 @@ function Player:initialize( x, y )
 	self.vel = Vec2:new( 0, 0 )
 	self.rot = 0
 	
-	EM:add( FOV, self, 200, 90, Player.color )
+	EM:add( FOV, self, 200, 120, Player.color )
 end
 
 function Player:checkInput( )

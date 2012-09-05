@@ -4,7 +4,7 @@ HEIGHT = 600
 debug_on = false
 
 function love.load()
-	
+
 	TLbind,control = love.filesystem.load("lib/TLbind.lua")()
 	require( 'lib/TEsound' )
 	require( 'lib/middleclass' )
@@ -41,13 +41,11 @@ function love.load()
 		end
 	end
 	
-	EM:add( Wall, 300, 300, 50, 50 )
-	EM:add( Wall, 325, 325, 50, 50 )
-	EM:add( Wall, 0, 310, 310, 25 )
-	EM:add( Wall, 340, 250, 100, 100 )
-	
 	EM:add( Player, 400, 300 )
-	
+	--EM:add( Wall, 250, 100, 100, 50 )
+	--EM:add( Wall, 400, 100, 50, 50 )
+	EM:add( Wall, 300, 200, 50, 50 )	
+	--EM:add( Wall, 400, 200, 50, 50 )
 end
 	
 function love.draw()

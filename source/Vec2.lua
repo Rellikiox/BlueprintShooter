@@ -38,15 +38,19 @@ function Vec2:Normalize( )
 end
 
 function Vec2:AngleRad( vec )
+	local angle = math.atan2( self.y, self.x )
 	if vec then
-		return math.atan2( vec.y, vec.x ) - math.atan2( self.y, self.x )
+		angle = math.atan2( vec.y, vec.x ) - angle
 	end
-	return math.atan2( self.y, self.x )
+	if angle < 0 then angle = angle + math.pi * 2 end
+	return angle
 end
 
 function Vec2:AngleDeg( vec )
-	if vec then
-		return math.deg( math.atan2( vec.y, vec.x ) - math.atan2( self.y, self.x ) )
-	end
-	return math.deg( math.atan2( self.y, self.x ) )
+	return math.deg( self:AngleRad( vec ) )
+end
+
+function Vec2:Multiply( factor )
+	self.x = self.x * factor
+	self.y = self.y * factor
 end
