@@ -57,13 +57,17 @@ end
 
 function Wall:draw( )
 	love.graphics.setStencil( self.stencil_func )
-	--[[
+
 	love.graphics.setColor( 46,48,148 )
 	love.graphics.rectangle( "fill", self.pos.x + 2, self.pos.y + 2, self.w - 4, self.h - 4)
 	love.graphics.setColor( 255, 255, 255, 255 )
 	love.graphics.draw( self.background_batch )
-	--]]
+
 	love.graphics.setStencil( )
+end
+
+function Wall:onCollision( other, dx, dy )
+	
 end
 
 function Wall:pointsFacing( point )

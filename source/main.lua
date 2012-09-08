@@ -2,7 +2,6 @@
 WIDTH = 800
 HEIGHT = 600
 debug_on = false
-
 function love.load()
 
 	TLbind,control = love.filesystem.load("lib/TLbind.lua")()
@@ -16,7 +15,7 @@ function love.load()
 	require( 'Vec2' )
 	require( 'Clock' )
 	local HC = require("lib/HardonCollider")
-	Collider = HC(10, collision)
+	Collider = HC(10, onCollision)
 	
 	love.graphics.setBackgroundColor(46,48,148)
 	
@@ -42,10 +41,13 @@ function love.load()
 	end
 	
 	EM:add( Player, 400, 300 )
-	--EM:add( Wall, 250, 100, 100, 50 )
-	--EM:add( Wall, 400, 100, 50, 50 )
-	EM:add( Wall, 300, 200, 50, 50 )	
-	--EM:add( Wall, 400, 200, 50, 50 )
+	EM:add( Wall, 250, 100, 100, 50 )
+	EM:add( Wall, 400, 100, 50, 50 )
+	EM:add( Wall, 500, 400, 25, 25 )	
+	EM:add( Wall, 500, 450, 25, 25 )	
+	EM:add( Wall, 500, 350, 25, 25 )	
+	EM:add( Wall, 500, 300, 25, 25 )	
+	EM:add( Wall, 430, 300, 50, 100 )
 end
 	
 function love.draw()
@@ -60,6 +62,10 @@ function love.draw()
 	love.graphics.setLineWidth( 1 )
 	
 	EM:draw()	
+	
+	if debug_on then
+		love.graphics.print( love.timer.getFPS(), 5, 5 )
+	end
 end
 
 function love.update(dt)
@@ -81,4 +87,10 @@ function love.mousepressed(x, y, button)
 end
 
 function love.mousereleased(x, y, button)
+end
+
+function onCollision(dt, obj1, obj2, dx, dy)
+print( "paso" )
+	obj1.parent:onCollision(obj2,  dx,  dy)
+	obj2.parent:onCollision(obj1, -dx, -dy)
 end

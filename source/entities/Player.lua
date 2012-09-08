@@ -13,6 +13,10 @@ function Player:initialize( x, y )
 	self.rot = 0
 	
 	EM:add( FOV, self, 200, 120, Player.color )
+	
+	self.shape = Collider:addCircle( self.pos.x, self.pos.y, Player.radius )
+	self.shape.parent = self
+	Collider:addToGroup("moving", self.shape)
 end
 
 function Player:checkInput( )
@@ -40,9 +44,19 @@ end
 
 function Player:update( dt )
 	self:checkInput()
-	
-	self.pos.x = self.pos.x + dt * self.vel.x
-	self.pos.y = self.pos.y + dt * self.vel.y
+	local dx = dt * self.vel.x
+	local dy = dt * self.vel.y
+	self:move( dx, dy )
+end
+
+function Player:move( dx, dy )
+	self.pos.x = self.pos.x + dx
+	self.pos.y = self.pos.y + dy
+	self.shape:move( dx, dy )
+end
+
+function Player:onCollision( other, dx, dy )
+	self:move( dx, dy )
 end
 
 function Player:draw( )

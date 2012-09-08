@@ -13,6 +13,7 @@ function FOV:initialize( owner, size, aperture, color )
 	self.segment_points = {}
 	self.close_segment_points = {}
 	self:calculateSegments()
+	self:calculateCloseSegments()
 	self.entities_in_sight = 0
 	
 	self.prov_list = { }
@@ -22,7 +23,6 @@ end
 
 function FOV:calculateSegments( )
 	self.segment_points = { }
-	self.close_segment_points = { }
 	self.tl = Vec2( self.owner.pos.x, self.owner.pos.y )
 	self.br = Vec2( self.owner.pos.x, self.owner.pos.y )
 	
@@ -32,13 +32,10 @@ function FOV:calculateSegments( )
 		local aux_sin = math.sin( math.rad(new_ang) )
 		local x1 = self.pos.x + self.size * aux_cos
 		local y1 = self.pos.y + self.size * aux_sin
-		local x0 = self.pos.x + Player.radius * aux_cos
-		local y0 = self.pos.y + Player.radius * aux_sin
 
 		local point = Vec2( x1, y1 )
 		point.ang = (i - 1) * self.segment_length
-		self.segment_points[ i ] = point
-		self.close_segment_points[ i ] = Vec2( x0, y0 )		
+		self.segment_points[ i ] = point	
 		
 		new_ang = new_ang + self.segment_length
 		
@@ -81,13 +78,26 @@ end
 
 function hasVision( p1, p2, objects )
 	local dir = p2 - p1
+	local best = 1
 	for k, v in pairs( objects ) do
 		local hit, t = v.shape:intersectsRay( p1.x, p1.y, dir.x, dir.y )
-		if hit and t < 1 then
-			return false, Vec2( p1.x + dir.x * t, p1.y + dir.y * t )
+		if hit and t < best then
+			best = t
 		end
 	end
-	return true
+	return best == 1, Vec2( p1.x + dir.x * best, p1.y + dir.y * best )
+end
+
+function FOV:calculateCloseSegments( )
+	self.close_segment_points = { }
+	
+	for k, v in ipairs( self.segment_points ) do
+		local dir = v - self.pos
+		dir:Normalize()
+		dir:Multiply( Player.radius )
+		dir = dir + self.pos
+		self.close_segment_points[ k ] = dir
+	end
 end
 
 function extractPoints( list )
@@ -158,23 +168,23 @@ function FOV:queryObjects2( )
 				local prev_point = self.segment_points[ k1 - 1 ]
 				local vis, col = hasVision( prev_point, point, { object } )
 				if not vis then
-					if hasVision( self.pos, col, { object } ) then
+					if hasVision( self.pos, col, visible_shapes ) then
 						col.ang = first_vec:AngleDeg( (col - self.pos) )
 						table.insert( self.arc_points, col )
 					end
 				end
 			end
+			
 			if k1 < #self.segment_points then
 				local next_point = self.segment_points[ k1 + 1 ]
 				local vis, col = hasVision( next_point, point, { object } )
 				if not vis then
-					if hasVision( self.pos, col, { object } ) then
+					if hasVision( self.pos, col, visible_shapes ) then
 						col.ang = first_vec:AngleDeg( (col - self.pos) )
 						table.insert( self.arc_points, col )
 					end
 				end
 			end
-			table.remove( self.segment_points, k1 )
 		end
 	end
 	
@@ -192,7 +202,6 @@ function FOV:queryObjects2( )
 		table.insert( self.debug_draw, coll_point)
 		table.insert( self.prov_list, coll_point )
 	end
-	
 
 	for k1, v1 in pairs( visible_shapes ) do
 		local extr_der, intermediate, extr_izq = extractPoints( v1:pointsFacing( self.pos ) )
@@ -227,7 +236,7 @@ function FOV:queryObjects2( )
 		end	
 		for k2, v2 in pairs( intermediate ) do
 			local vec = v2 - self.pos
-			if vec:Length() <= self.size then
+			if hasVision( self.pos, v2, visible_shapes ) and vec:Length() <= self.size  then
 				v2.ang = first_vec:AngleDeg( vec )
 				table.insert( self.prov_list, v2 )
 				table.insert( self.debug_draw, v2 )
@@ -256,6 +265,12 @@ function FOV:queryObjects2( )
 		end		
 	end
 	
+	while 0 and i <= max_i and erasing do
+		table.remove( self.segment_points, i )
+		max_i = max_i - 1
+	end
+	
+	
 	local i, j = 1, 1
 	local max_i, max_j = #self.segment_points, #self.prov_list
 	while i <= max_i and j <= max_j do
@@ -270,18 +285,19 @@ function FOV:queryObjects2( )
 		table.insert( self.segment_points, self.prov_list[ j ] )
 		j = j + 1
 	end
+
 end
 
 function drawX( p )
-	love.graphics.line( p.x - 3, p.y - 3, p.x + 3, p.y + 3 )
-	love.graphics.line( p.x - 3, p.y + 3, p.x + 3, p.y - 3 )
+	love.graphics.line( p.x - 2, p.y - 2, p.x + 2, p.y + 2 )
+	love.graphics.line( p.x - 2, p.y + 2, p.x + 2, p.y - 2 )
 end
 
 function FOV:draw( )
 	-- Filling of the FOV
-	--[[
 	self.color[ 4 ] = 100
 	love.graphics.setColor( unpack( self.color ) )
+	
 	for i = 1, #self.segment_points - 1 do
 		local p0 = self.close_segment_points[ i ]
 		local p1 = self.segment_points[ i ]
@@ -289,7 +305,7 @@ function FOV:draw( )
 		local p3 = self.close_segment_points[ i + 1 ]
 		love.graphics.polygon( "fill", p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y )
 	end
-	--]]
+	
 	-- Border of the FOV
 	self.color[ 4 ] = 255
 	love.graphics.setColor( unpack( self.color ) )
@@ -304,16 +320,17 @@ function FOV:draw( )
 	if debug_on then
 		love.graphics.rectangle( "line", self.tl.x, self.tl.y, self.br.x - self.tl.x, self.br.y - self.tl.y )
 		love.graphics.print( self.entities_in_sight, self.pos.x + 10, self.pos.y )
+		love.graphics.setColor( 255, 0, 0 )
+		for k, v in pairs( self.segment_points ) do
+			--drawX( v )
+		end
 		love.graphics.setColor( 255, 255, 255 )
 		for k, v in pairs( self.prov_list ) do
 			drawX( v )
-			love.graphics.print( k, v.x + 5, v.y + 5 )
 		end
-		love.graphics.setColor( 255, 0, 0 )
-		for k, v in pairs( self.segment_points ) do
+		love.graphics.setColor( 0, 255, 0 )
+		for k, v in pairs( self.arc_points ) do
 			drawX( v )
-			--love.graphics.print( k, v.x + 5, v.y + 15 )
-			love.graphics.print( math.floor( v.ang ) , v.x + 5, v.y + 25 )
 		end
 	end
 end
@@ -327,10 +344,12 @@ function FOV:update( dt )
 	self.pos.y = self.owner.pos.y
 	self.rot = self.owner.rot
 	if change then
+	
 		local timer = Clock()
 		self:calculateSegments()
 		self:queryObjects2()
-
+		self:calculateCloseSegments()
+		
 		if debug_on then
 			print( "Query objects: " .. timer:getElapsedMicroseconds() )
 		end

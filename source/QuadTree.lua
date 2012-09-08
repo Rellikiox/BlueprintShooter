@@ -2,7 +2,7 @@
 
 QuadTree = class( "QuadTree" )
 
-QuadTree.static.MAX_DEPTH = 6
+QuadTree.static.MAX_DEPTH = 5
 function QuadTree:initialize( boundary, depth )
 	self.boundary = boundary
 	self.divided = false
