@@ -11,7 +11,7 @@ function Agent:initialize( x, y, color, radius )
 	self.rot = 0
 	self.color = color
 	self.radius = radius
-	self.commander = Commander()
+	self.commander = Commander( self.pos )
 	
 	self.shape = Collider:addCircle( self.pos.x, self.pos.y, Player.radius )
 	self.shape.parent = self
@@ -33,8 +33,6 @@ function Agent:update( dt )
 	local dx = dt * self.vel.x
 	local dy = dt * self.vel.y
 	self:move( dx, dy )
-	
-
 end
 
 function Agent:draw( )
@@ -54,6 +52,8 @@ function Agent:draw( )
 		end
 	end
 	--]]
+	
+	self.commander:draw()
 end
 
 function Agent:addAction( x, y, a, e )
@@ -68,8 +68,9 @@ end
 
 Commander = class( 'Commander' )
 
-function Commander:initialize( )
+function Commander:initialize( pos )
 	self.commands = { }
+	self.pos = pos
 end
 
 function Commander:currentAction( )
@@ -85,11 +86,16 @@ function Commander:currentAction( )
 end
 
 function Commander:addAction( x, y, action, end_cond, ... ) 
-	table.insert( self.commands, Command( x, t, action, end_cond ) )
+	table.insert( self.commands, Command( x, y, action, end_cond ) )
 end
 
 function Commander:draw( )
-	
+	if #self.commands ~= 0 then
+		love.graphics.line( self.pos.x, self.pos.y, self.commands[ 1 ].pos.x, self.commands[ 1 ].pos.y )
+		for i = 2, #self.commands do
+			love.graphics.line( self.commands[ i - 1 ].pos.x, self.commands[ i - 1 ].pos.y, self.commands[ i ].pos.x, self.commands[ i ].pos.y )
+		end
+	end
 end
 
 -- COMMAND
@@ -103,7 +109,7 @@ function Command:initialize( x, y, action, endCond )
 end
 
 function Command:endCondition( )
-	return self.startCondition()
+	return self:endCondition( )
 end
 
 function Command:execute( )

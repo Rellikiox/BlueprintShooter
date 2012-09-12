@@ -14,6 +14,7 @@ function love.load()
 	require( 'entities/FOV' )
 	require( 'Vec2' )
 	require( 'Clock' )
+	
 	local HC = require("lib/HardonCollider")
 	Collider = HC(10, onCollision)
 	
@@ -85,7 +86,7 @@ end
 
 function love.mousepressed(x, y, button)
 	if button == "l" then
-		player:addAction( Command( x, y, potato ) )
+		player:addAction( x, y, potato, function (  ) return false end )
 	end
 end
 
