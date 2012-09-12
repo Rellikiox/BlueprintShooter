@@ -23,6 +23,8 @@ function EntityManager:add( klass, ... )
 	if klass == Wall then
 		self.QT:insert( ent, ent:getAABB() )
 	end
+	
+	return ent
 end
 
 function EntityManager:getEntitiesByClass( klass )

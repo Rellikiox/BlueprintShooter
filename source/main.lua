@@ -40,7 +40,7 @@ function love.load()
 		end
 	end
 	
-	EM:add( Player, 400, 300 )
+	player = EM:add( Player, 400, 300 )
 	EM:add( Wall, 250, 100, 100, 50 )
 	EM:add( Wall, 400, 100, 50, 50 )
 	EM:add( Wall, 500, 400, 25, 25 )	
@@ -84,13 +84,15 @@ function love.keypressed(key, unicode)
 end
 
 function love.mousepressed(x, y, button)
+	if button == "l" then
+		player:addAction( Command( x, y, potato ) )
+	end
 end
 
 function love.mousereleased(x, y, button)
 end
 
 function onCollision(dt, obj1, obj2, dx, dy)
-print( "paso" )
 	obj1.parent:onCollision(obj2,  dx,  dy)
 	obj2.parent:onCollision(obj1, -dx, -dy)
 end
