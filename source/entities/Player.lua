@@ -32,9 +32,8 @@ function Player:checkInput( )
 		self.vel.y = 0
 	end
 
-	self.rot = math.deg( -math.atan2( self.pos.y - love.mouse.getY(), love.mouse.getX() - self.pos.x ) )
-	if self.rot < 0 then
-		self.rot = self.rot + 360
-	end
+	local rot = math.deg( -math.atan2( self.pos.y - love.mouse.getY(), love.mouse.getX() - self.pos.x ) )
+	--self:rotate( rot )
+	self.rot = rot 
 end
 

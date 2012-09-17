@@ -41,7 +41,7 @@ function love.load()
 		end
 	end
 	
-	player = EM:add( Player, 400, 300 )
+	player = EM:add( Player, 400, 301 )
 	EM:add( Wall, 250, 100, 100, 50 )
 	EM:add( Wall, 400, 100, 50, 50 )
 	EM:add( Wall, 500, 400, 25, 25 )	
@@ -86,7 +86,7 @@ end
 
 function love.mousepressed(x, y, button)
 	if button == "l" then
-		player:addAction( x, y, potato, function (  ) return false end )
+		player:addAction( x, y, potato )
 	end
 end
 

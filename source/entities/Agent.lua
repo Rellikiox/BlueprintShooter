@@ -8,6 +8,7 @@ function Agent:initialize( x, y, color, radius )
 
 	self.pos = Vec2:new( x, y )
 	self.vel = Vec2:new( 0, 0 )
+	self.vel.r = 0
 	self.rot = 0
 	self.color = color
 	self.radius = radius
@@ -18,21 +19,28 @@ function Agent:initialize( x, y, color, radius )
 	Collider:addToGroup("agents", self.shape)
 end
 
-function Agent:move( dx, dy )
+function Agent:move( dx, dy, dr )
 	self.pos.x = self.pos.x + dx
 	self.pos.y = self.pos.y + dy
+	
+	self.rot   = self.rot + dr
+	
 	self.shape:move( dx, dy )
+	self.shape:rotate( math.rad( dr ) )
 end
 
 function Agent:onCollision( other, dx, dy )
-	self:move( dx, dy )
+	self:move( dx, dy, 0 )
 end
 
 function Agent:update( dt )
 	self:checkInput()
 	local dx = dt * self.vel.x
 	local dy = dt * self.vel.y
-	self:move( dx, dy )
+	local dr = dt * self.vel.r
+	
+	print( self.rot .. " " .. self.vel.r .. " " .. dr )
+	self:move( dx, dy, dr )	
 end
 
 function Agent:draw( )
@@ -44,24 +52,40 @@ function Agent:draw( )
 	love.graphics.setColor( unpack( self.color ) )
 	love.graphics.circle( "line", self.pos.x, self.pos.y, self.radius ) 
 	
-	--[[ Draw the command list
-	if not self.commands:empty( ) then
-		love.graphics.line( self.pos.x, self.pos.y, self.commands.queue[ 1 ].pos.x, self.commands.queue[ 1 ].pos.y )
-		for i = 2, #self.commands.queue do
-			love.graphics.line( self.commands.queue[ i - 1 ].pos.x, self.commands.queue[ i - 1 ].pos.y, self.commands.queue[ i ].pos.x, self.commands.queue[ i ].pos.y )
-		end
-	end
-	--]]
-	
-	self.commander:draw()
+	--self.commander:draw()
 end
 
-function Agent:addAction( x, y, a, e )
-	self.commander:addAction( x, y, a, e )
+function Agent:addAction( x, y, a )
+	self.commander:addAction( x, y, a )
 end
 
 function Agent:getAABB( )
 	return AABB:new( Vec2:new( self.pos.x - Player.radius, self.pos.y - Player.radius ), Vec2:new( Player.radius / 2, Player.radius / 2 ) )
+end
+
+-- Agent Actions
+
+function Agent:wait( t )
+	
+end
+
+function Agent:travelTowards( p )
+
+end
+
+function Agent:rotate( r )
+	if math.abs( self.rot - r ) > 1 then
+		local rot_dif = r - self.rot
+		if rot_dif > 180 then
+			self.vel.r = -180
+			--rot_dif = rot_dif - 360
+		else
+			self.vel.r = 180
+		end
+		--self.vel.r = rot_dif
+	else
+		self.vel.r = 0
+	end
 end
 
 -- COMMANDER
@@ -71,22 +95,31 @@ Commander = class( 'Commander' )
 function Commander:initialize( pos )
 	self.commands = { }
 	self.pos = pos
+	--self.finished = false
 end
 
 function Commander:currentAction( )
+	--[[
 	if #self.commands == 0 then
 		return nil
 	end
-	
-	if self.commands[ 1 ]:endCondition() then
+	if self.finished then
 		table.remove( self.commands, 1 )
+		self.finished = false
 	end	
-	
+	--]]
 	return self.commands[ 1 ]
 end
 
+function Commander:finishCurrentAction( )
+	--self.finished = true
+	if #self.commands > 0 then
+		table.remove( self.commands, 1 )
+	end
+end
+
 function Commander:addAction( x, y, action, end_cond, ... ) 
-	table.insert( self.commands, Command( x, y, action, end_cond ) )
+	table.insert( self.commands, Command( x, y, action ) )
 end
 
 function Commander:draw( )
