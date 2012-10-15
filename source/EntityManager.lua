@@ -1,6 +1,6 @@
 -- Entity Manager
 
-require( 'QuadTree' )	
+require( 'misc/QuadTree' )	
 
 EntityManager = class( "EntityManager" )
 

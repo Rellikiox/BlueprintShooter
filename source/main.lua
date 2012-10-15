@@ -12,8 +12,8 @@ function love.load()
 	require( 'entities/Player' )
 	require( 'entities/Wall' )
 	require( 'entities/FOV' )
-	require( 'Vec2' )
-	require( 'Clock' )
+	require( 'misc/Vec2' )
+	require( 'misc/Clock' )
 	
 	local HC = require("lib/HardonCollider")
 	Collider = HC(10, onCollision)
@@ -86,7 +86,11 @@ end
 
 function love.mousepressed(x, y, button)
 	if button == "l" then
-		player:addAction( x, y, potato )
+		player:addAction( "move", Vec2(x, y), { pos = Vec2(x, y) } )
+	elseif button == "r" then
+		player:addAction( "move", Vec2(x, y), { pos = Vec2(x, y), rot = { fixed = true, pos = Vec2(x, y) } } )
+	elseif button == "m" then
+		player:addAction( "move", Vec2(x, y), { pos = Vec2(x, y), rot = { fixed = true, pos = Vec2(300,400) } } )
 	end
 end
 
